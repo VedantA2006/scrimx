@@ -7,15 +7,24 @@ const { upload } = require('../middleware/upload.middleware');
 
 const { validate } = require('../middleware/validate.middleware');
 
+// Helper: extract real client IP from x-forwarded-for (Render sends comma-separated list)
+const getClientIp = (req) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.ip || req.connection?.remoteAddress || 'unknown';
+};
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 1000,
+  keyGenerator: getClientIp,
   message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' }
 });
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,  // 1 hour
-  max: 5,                     // 5 registrations per hour per IP
+  max: 1000,                 // Generous limit for production behind proxy
+  keyGenerator: getClientIp,
   message: { success: false, message: 'Too many accounts created. Try again later.' }
 });
 
