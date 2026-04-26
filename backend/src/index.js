@@ -60,15 +60,7 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Tighter rate limiter for auth routes (brute-force protection)
-// max is per-real-IP (trust proxy is set above so req.ip works correctly)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 500,
-  message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false
-});
+// Auth-specific rate limiters are defined per-route in auth.routes.js
 
 // Body parsing
 app.use(express.json({ limit: '25mb' }));
@@ -81,7 +73,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/scrims', scrimRoutes);
 app.use('/api/organizers', organizerRoutes);
