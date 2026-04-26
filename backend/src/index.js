@@ -26,9 +26,7 @@ const { errorHandler, notFound } = require('./middleware/error.middleware');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Trust proxy for correct client IP behind Render/Vercel reverse proxy
-// Without this, express-rate-limit sees ALL users as the same IP
-// Using 'true' to trust all proxies — Render uses multiple proxy layers
+// Trust proxy so express-rate-limit can read X-Forwarded-For properly
 app.set('trust proxy', true);
 
 // Security
@@ -37,6 +35,9 @@ app.use(helmet());
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'http://localhost:5173',
+  'https://scrimx-git-main-sameets-projects-48b152d9.vercel.app',
+  'https://scrimx-sigma.vercel.app',
+  'https://www.scrimx.online',
   'http://localhost:3000'
 ].filter(Boolean);
 
@@ -51,27 +52,23 @@ app.use(cors({
   credentials: true
 }));
 
-// Helper: extract real client IP from x-forwarded-for (Render sends comma-separated list)
-const getClientIp = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    // First IP in the list is the real client IP
-    return forwarded.split(',')[0].trim();
-  }
-  return req.ip || req.connection?.remoteAddress || 'unknown';
-};
-
 // Global rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 2000,
-  keyGenerator: getClientIp,
   message: { success: false, message: 'Too many requests, please try again later.' }
 });
 app.use('/api/', limiter);
 
-// Auth-specific rate limiters are defined per-route in auth.routes.js
-// (login: 500/15min, register: 500/1hr) — no extra blanket limiter needed here
+// Tighter rate limiter for auth routes (brute-force protection)
+// max is per-real-IP (trust proxy is set above so req.ip works correctly)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  message: { success: false, message: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Body parsing
 app.use(express.json({ limit: '25mb' }));
@@ -84,7 +81,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/scrims', scrimRoutes);
 app.use('/api/organizers', organizerRoutes);
