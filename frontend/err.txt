@@ -1,0 +1,15 @@
+
+> scrimx-frontend@1.0.0 build
+> vite build
+
+[31mfailed to load config from C:\Users\vedan\OneDrive\Desktop\ScrimX Main\frontend\vite.config.js[39m
+[31merror during build:
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@vitejs/plugin-react' imported from C:\Users\vedan\OneDrive\Desktop\ScrimX Main\frontend\node_modules\.vite-temp\vite.config.js.timestamp-1774883996790-6684ce2da35b5.mjs
+    at packageResolve (node:internal/modules/esm/resolve:873:9)
+    at moduleResolve (node:internal/modules/esm/resolve:946:18)
+    at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:168:49)[39m
